@@ -15,7 +15,7 @@
 extern "C" {
 #endif
 
-#define RTE_VECT_DEFAULT_SIMD_BITWIDTH RTE_VECT_SIMD_DISABLED
+#define RTE_VECT_DEFAULT_SIMD_BITWIDTH RTE_VECT_SIMD_256
 
 typedef int32_t		xmm_t __attribute__((vector_size(16)));
 
