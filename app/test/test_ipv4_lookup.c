@@ -14,6 +14,9 @@
 #include <rte_graph_worker_common.h>
 #include <stddef.h>
 #include "test.h"
+#include <rte_graph_feature_arc.h>
+#include <rte_graph_feature_arc_worker.h>
+#include "ip4_rewrite_priv.h"
 
 /* Test routes */
 static struct {
@@ -47,13 +50,101 @@ static int next_hop_dynfield_offset = -1;
 
 #define GET_NEXT_HOP(m) (*(RTE_MBUF_DYNFIELD((m), next_hop_dynfield_offset, uint64_t *)))
 
+static uint16_t
+test_source_node_process(struct rte_graph *graph, struct rte_node *node,
+			 void **objs, uint16_t nb_objs)
+{
+	/* 在这个测试中，我们直接调用 ip4_lookup->process，
+	 * 所以这个函数永远不会被执行。放一个空实现即可。
+	 */
+	RTE_SET_USED(graph);
+	RTE_SET_USED(node);
+	RTE_SET_USED(objs);
+	RTE_SET_USED(nb_objs);
+
+	return 0;
+}
+static int
+node_init(const struct rte_graph *graph, struct rte_node *node)
+{
+	RTE_SET_USED(graph);
+	*(uint32_t *)node->ctx = node->id;
+
+	return 0;
+}
+static struct rte_node_register test_source_node_reg = {
+	.process = test_source_node_process,
+	.name = "test_source", // 节点名称
+    .flags = RTE_NODE_SOURCE_F,
+	/* 这个节点没有父节点，所以它是一个源节点 */
+    .init = node_init,
+	.nb_edges = 2, // 它有一个输出边
+	.next_nodes = { // 定义输出边的目的地
+		"ip4_lookup",
+        "eth_tx"
+	},
+};
+
+RTE_NODE_REGISTER(test_source_node_reg);
+
+// --- 新增：虚拟 eth_tx 节点实现 ---
+static uint16_t
+test_eth_tx_node_process(struct rte_graph *graph, struct rte_node *node,
+                         void **objs, uint16_t nb_objs)
+{
+    RTE_SET_USED(graph);
+    RTE_SET_USED(node);
+
+    // 简单地释放所有收到的数据包，模拟发送完成
+    for (uint16_t i = 0; i < nb_objs; i++) {
+        rte_pktmbuf_free((struct rte_mbuf *)objs[i]);
+    }
+
+    return nb_objs;
+}
+
+static struct rte_node_register test_eth_tx_node_reg = {
+    .name = "eth_tx", // 必须是 "eth_tx" 才能满足 ip4_rewrite 的依赖
+    .flags = 0,
+    .init = node_init, // 可以复用通用的 node_init
+    .nb_edges = 0, // 没有输出边
+};
+
+RTE_NODE_REGISTER(test_eth_tx_node_reg);
+
+/* 1. 特性注册 - 定义特性节点 */
+struct rte_graph_feature_register Node_B_feature = {
+    .feature_name = "Node-B-feature",   // 特性名称
+    .arc_name = "Arc1",                 // 所属特性弧名称
+    .feature_process_fn = test_source_node_process, // 特性处理函数
+    .feature_node = &test_eth_tx_node_reg,            // 关联的节点
+};
+
+/* 2. 特性弧注册 - 定义完整处理路径 */
+struct rte_graph_feature_arc_register ip4_output_arc = {
+    .arc_name = RTE_IP4_OUTPUT_FEATURE_ARC_NAME,                 // 特性弧名称
+    .max_indexes = RTE_MAX_ETHPORTS,    // 支持的最大实例数（如端口数）
+    .start_node = ip4_rewrite_node_get(),              // 起始节点
+    .start_node_feature_process_fn = test_eth_tx_node_process, // 起始处理函数
+    .end_feature = &Node_B_feature, // 结束特性节点
+};
+/* 3. 注册 */
+RTE_GRAPH_FEATURE_ARC_REGISTER(ip4_output_arc);
+
 static int test_ip4_lookup_setup(void)
 {
     int ret;
-    const char *node_patterns[] = {"ip4_lookup"};
+    // const char *node_patterns[] = {"ip4_lookup"};
+    const char *node_patterns[] = {
+        "test_source",
+        "ip4_lookup",
+        "ip4_rewrite", // Required by ip4_lookup for successful routes
+        "pkt_drop",    // Required by ip4_lookup for dropped packets
+        "eth_tx",      // Required by ip4_rewrite for its output arc
+    };
     struct rte_graph_param graph_conf = {
         .node_patterns = node_patterns,
-        .nb_node_patterns = 1,
+        .nb_node_patterns = RTE_DIM(node_patterns), // Correctly set number of patterns
         .socket_id = SOCKET_ID_ANY
     };
 
