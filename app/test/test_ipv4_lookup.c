@@ -85,6 +85,7 @@ static struct rte_node_register test_source_node_reg = {
 
 RTE_NODE_REGISTER(test_source_node_reg);
 
+<<<<<<< Updated upstream
 // --- 新增：虚拟 eth_tx 节点实现 ---
 static uint16_t
 test_eth_tx_node_process(struct rte_graph *graph, struct rte_node *node,
@@ -129,10 +130,13 @@ struct rte_graph_feature_arc_register ip4_output_arc = {
 /* 3. 注册 */
 RTE_GRAPH_FEATURE_ARC_REGISTER(ip4_output_arc);
 
+=======
+>>>>>>> Stashed changes
 static int test_ip4_lookup_setup(void)
 {
     int ret;
     // const char *node_patterns[] = {"ip4_lookup"};
+<<<<<<< Updated upstream
     const char *node_patterns[] = {
         "test_source",
         "ip4_lookup",
@@ -143,6 +147,12 @@ static int test_ip4_lookup_setup(void)
     struct rte_graph_param graph_conf = {
         .node_patterns = node_patterns,
         .nb_node_patterns = RTE_DIM(node_patterns), // Correctly set number of patterns
+=======
+    const char *node_patterns[] = {"test_source", "ip4_lookup"}; // 修改为新的伪源节点
+    struct rte_graph_param graph_conf = {
+        .node_patterns = node_patterns,
+        .nb_node_patterns = 2,
+>>>>>>> Stashed changes
         .socket_id = SOCKET_ID_ANY
     };
 
