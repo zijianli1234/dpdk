@@ -3,7 +3,6 @@
 #include <rte_mbuf_pool_ops.h>
 #include <rte_ip.h>
 #include <rte_lpm.h>
-// #include <rte_node_ip4.h>
 #include <rte_node_ip4_api.h>
 #include <rte_ethdev.h>
 #include <cmdline_parse.h>
@@ -78,10 +77,9 @@ static struct rte_node_register test_source_node_reg = {
     .flags = RTE_NODE_SOURCE_F,
 	/* 这个节点没有父节点，所以它是一个源节点 */
     .init = node_init,
-	.nb_edges = 2, // 它有一个输出边
+	.nb_edges = 1, // 它有一个输出边
 	.next_nodes = { // 定义输出边的目的地
 		"ip4_lookup",
-        "eth_tx"
 	},
 };
 
