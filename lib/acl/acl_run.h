@@ -14,6 +14,8 @@
 #define MAX_SEARCHES_SSE4	4
 #define MAX_SEARCHES_ALTIVEC4	4
 #define MAX_SEARCHES_SCALAR	2
+#define MAX_SEARCHES_RVV8	8
+#define MAX_SEARCHES_RVV4	4
 
 #define GET_NEXT_4BYTES(prm, idx)	\
 	(*((const int32_t *)((prm)[(idx)].data + *(prm)[idx].data_index++)))
