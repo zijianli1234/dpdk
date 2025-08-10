@@ -146,6 +146,38 @@ if (riscv_extension_macros and
     warning('Detected V extension but cannot use because intrinsics are not available (present in GCC 14.1.0+ and Clang 18.1.0+)')
   endif
 endif
+# check if we can use hwprobe interface for runtime extension detection
+riscv_hwprobe = false
+if (cc.check_header('asm/hwprobe.h', args: machine_args))
+  message('Detected hwprobe interface, enabling runtime detection of supported extensions')
+  machine_args += ['-DRTE_RISCV_FEATURE_HWPROBE']
+  dpdk_flags += [['RTE_RISCV_FEATURE_HWPROBE', 1],]
+  riscv_hwprobe = true
+else
+  warning('Hwprobe interface not available (present in Linux v6.4+), instruction extensions won\'t be enabled')
+endif
+# detect extensions
+# RISC-V Carry-less multiplication extension (Zbc) for hardware implementations
+# of CRC-32C (lib/hash/rte_crc_riscv64.h) and CRC-32/16 (lib/net/net_crc_zbc.c).
+# Requires intrinsics available in GCC 14.1.0+ and Clang 18.1.0+
+if (riscv_extension_macros and riscv_hwprobe and
+    (cc.get_define('__riscv_zbc', args: machine_args) != ''))
+  if ((cc.get_id() == 'gcc' and cc.version().version_compare('>=14.1.0'))
+      or (cc.get_id() == 'clang' and cc.version().version_compare('>=18.1.0')))
+    # determine whether we can detect Zbc extension (this wasn't possible until
+    # Linux kernel v6.8)
+    if (cc.compiles('''#include <asm/hwprobe.h>
+                       int a = RISCV_HWPROBE_EXT_ZBC;''', args: machine_args))
+      message('Compiling with the Zbc extension')
+      machine_args += ['-DRTE_RISCV_FEATURE_ZBC']
+      dpdk_flags += [['RTE_RISCV_FEATURE_ZBC', 1],]
+    else
+      warning('Detected Zbc extension but cannot use because runtime detection doesn\'t support it (support present in Linux kernel v6.8+)')
+    endif
+  else
+    warning('Detected Zbc extension but cannot use because intrinsics are not available (present in GCC 14.1.0+ and Clang 18.1.0+)')
+  endif
+endif
 
 # apply flags
 foreach flag: dpdk_flags

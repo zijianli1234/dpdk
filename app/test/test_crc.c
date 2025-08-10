@@ -96,6 +96,17 @@ crc_all_algs(const char *desc, enum rte_net_crc_type type,
 	}
 	rte_net_crc_free(ctx);
 
+	/* set CRC riscv mode */
+	ctx = rte_net_crc_set_alg(RTE_NET_CRC_ZBC, type);
+	TEST_ASSERT_NOT_NULL(ctx, "cannot allocate the CRC context");
+	crc = rte_net_crc_calc(ctx, data, data_len);
+	if (crc != res) {
+		RTE_LOG(ERR, USER1, "TEST FAILED: %s ZBC\n", desc);
+		debug_hexdump(stdout, "ZBC", &crc, 4);
+		ret = TEST_FAILED;
+	}
+	rte_net_crc_free(ctx);
+
 	return ret;
 }
 

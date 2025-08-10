@@ -44,4 +44,15 @@ rte_crc16_ccitt_neon_handler(const uint8_t *data, uint32_t data_len);
 uint32_t
 rte_crc32_eth_neon_handler(const uint8_t *data, uint32_t data_len);
 
+/* RISCV64 Zbc */
+void
+rte_net_crc_zbc_init(void);
+
+uint32_t
+rte_crc16_ccitt_zbc_handler(const uint8_t *data, uint32_t data_len);
+
+uint32_t
+rte_crc32_eth_zbc_handler(const uint8_t *data, uint32_t data_len);
+
+
 #endif /* _NET_CRC_H_ */

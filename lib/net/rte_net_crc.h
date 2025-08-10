@@ -25,6 +25,7 @@ enum rte_net_crc_alg {
 	RTE_NET_CRC_SSE42,
 	RTE_NET_CRC_NEON,
 	RTE_NET_CRC_AVX512,
+	RTE_NET_CRC_ZBC,
 };
 
 /** CRC context (algorithm, type) */
@@ -51,6 +52,7 @@ rte_net_crc_free(struct rte_net_crc *crc);
  *   - RTE_NET_CRC_SSE42 (Use 64-bit SSE4.2 intrinsic)
  *   - RTE_NET_CRC_NEON (Use ARM Neon intrinsic)
  *   - RTE_NET_CRC_AVX512 (Use 512-bit AVX intrinsic)
+*   - RTE_NET_CRC_ZBC (Use RISC-V Zbc extension)
  * @param type
  *   CRC type (enum rte_net_crc_type)
  *
