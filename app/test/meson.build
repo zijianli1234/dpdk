@@ -103,7 +103,6 @@ source_file_deps = {
     'test_ipsec.c': ['bus_vdev', 'net', 'cryptodev', 'ipsec', 'security'],
     'test_ipsec_perf.c': ['net', 'ipsec'],
     'test_ipsec_sad.c': ['ipsec'],
-    # 'test_ipv4_lookup.c': ['node', 'net'],
     'test_kvargs.c': ['kvargs'],
     'test_latencystats.c': ['ethdev', 'latencystats', 'metrics'] + sample_packet_forward_deps,
     'test_lcore_var.c': [],
