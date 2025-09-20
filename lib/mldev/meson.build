@@ -10,6 +10,10 @@ sources = files(
 if (dpdk_conf.has('RTE_ARCH_ARM64') and
     cc.get_define('__ARM_NEON', args: machine_args) != '')
     sources += files('mldev_utils_neon.c')
+elif (dpdk_conf.has('RTE_ARCH_RISCV') and
+        cc.get_define('RTE_RISCV_FEATURE_V', args:machine_args) != '')
+        sources += files('mldev_utils_rvv.c')
+        # sources += files('mldev_utils_rvv_bfloat16.c')
 else
     sources += files('mldev_utils_scalar.c')
 endif
